@@ -21,7 +21,7 @@ const AppDock: React.FC = () => {
   return (
     <div className="relative">
       <Dock
-        className="fixed bottom-8 left-1/2 transform -translate-x-1/2 shadow-md align-middle justify-center"
+        className="shadow-md align-middle justify-center"
         magnification={60}
         distance={100}
         direction="middle"

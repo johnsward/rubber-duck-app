@@ -1,11 +1,15 @@
+import React from "react";
+
 // styles.ts
 export const styles = {
   pageContainer: {
+    position: "relative" as "relative",
+    margin: 0,
+    height: "100vh",
     display: "flex",
-    flexDirection: "column",
+    flexDirection: "row" as "row",
     alignItems: "center",
     justifyContent: "flex-start",
-    maxHeight: "100vh",
     width: "100%",
     overflow: "hidden",
   } as React.CSSProperties,
@@ -19,12 +23,38 @@ export const styles = {
     height: "100%",
   } as React.CSSProperties,
 
+  darkText: {
+    fontSize: 16,
+    fontWeight: 400,
+    color: "#242424",
+  } as React.CSSProperties,
+
+  lightText: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "#A49CA1",
+  } as React.CSSProperties,
+
+  conversationListText: {
+    textOverflow: "ellipsis",
+    fontSize: 14,
+    fontWeight: 400,
+    color: "#242424",
+  } as React.CSSProperties,
+
+  registerLink: {
+    fontSize: 14,
+    fontWeight: 600,
+    color: "#242424",
+    textDecoration: "underline",
+  } as React.CSSProperties,
+
   introductionContainer: {
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
     alignItems: "center",
-    width: "100%"
+    width: "100%",
   } as React.CSSProperties,
 
   greeting: {
@@ -46,7 +76,7 @@ export const styles = {
     fontSize: 12,
     lineHeight: "16px",
     textWrap: "pretty",
-    maxWidth: 400
+    maxWidth: 400,
   } as React.CSSProperties,
 
   rubberDuckContainer: {
@@ -61,19 +91,46 @@ export const styles = {
     justifyContent: "center",
     alignItems: "center",
     width: "100%",
-    height: "calc(100vh - 120px)",
+    height: "100vh",
     padding: "16px",
+  } as React.CSSProperties,
+
+  conversationListContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    cursor: "pointer",
+    width: "100%",
+    borderRadius: 8,
+    transition: "all 0.2s ease in out",
+  } as React.CSSProperties,
+
+  selectedConversationListContainer: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 8,
+    cursor: "pointer",
+    width: "100%",
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.05)",
+    transition: "all 0.2s ease in out",
   } as React.CSSProperties,
 
   messagesContainer: {
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "flex-start",
+    margin: "40px 0 30px 0",
     width: "100%",
     gap: 8,
     maxHeight: "100%",
     overflowY: "auto",
+    scrollbarWidth: "none",
+    "::WebkitScrollbar": {
+      display: "none",
+    },
   } as React.CSSProperties,
 
   userMessageStyle: {
@@ -82,14 +139,15 @@ export const styles = {
     padding: 12,
     borderRadius: 10,
     backgroundColor: "#e0f7fa",
+    wordWrap: "break-word",
+    overflowWrap: "break-word",
   } as React.CSSProperties,
 
   responseMessageStyle: {
     alignSelf: "flex-start",
-    maxWidth: 600,
+    maxWidth: 800,
     padding: 12,
     borderRadius: 10,
-    backgroundColor: "#ffffff",
   } as React.CSSProperties,
 
   messagesContainerStyle: {
@@ -98,6 +156,7 @@ export const styles = {
     alignItems: "flex-end",
     width: 800,
     gap: 8,
+    marginTop: 40,
     marginBottom: 80,
     overflowY: "auto",
   } as React.CSSProperties,
@@ -123,4 +182,57 @@ export const styles = {
     backgroundColor: "transparent",
     marginBottom: 8,
   } as React.CSSProperties,
+
+  extendedSidebarContainer: {
+    transition: "width 0.4s ease",
+    height: "100%",
+    width: 400,
+    backgroundColor: "rgba(0, 0, 0, 0.05)",
+  } as React.CSSProperties,
+
+  collapsedSidebarContainer: {
+    transition: "width 0.3s ease",
+    width: 0,
+    height: "100%",
+  } as React.CSSProperties,
+
+  collapsedHeaderContainer: {
+    marginLeft: 5,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexDirection: "row",
+    width: "calc(100% - 5px)",
+  } as React.CSSProperties,
+
+  extendedHeaderContainer: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    height: 64,
+    transition: "all 0.3s ease",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "calc(100% - 260px)",
+    marginLeft: 260,
+  } as React.CSSProperties,
+
+  sidebarHeader: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    height: 70,
+    padding: 12,
+  } as React.CSSProperties,
+
+  navigationMenuTriggerStyle: {
+    display: "block",
+    padding: "12px 8px",
+    fontSize: 12,
+    color: "#A49CA1",
+    borderRadius: 4,
+  },
 };

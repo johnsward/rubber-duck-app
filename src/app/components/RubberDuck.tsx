@@ -6,9 +6,10 @@ import { useSpring, animated } from "@react-spring/web";
 interface DuckProps {
   width?: number,
   height?: number,
+  isAnimated: boolean,
 }
 
-const RubberDuck: React.FC<DuckProps> = ({width, height }) => {
+const RubberDuck: React.FC<DuckProps> = ({width, height, isAnimated }) => {
   const [scalingAnimation, scalingApi] = useSpring(() => ({
     from: { scale: 0.8 },
     to: { scale: 1.0 },
@@ -39,11 +40,16 @@ const RubberDuck: React.FC<DuckProps> = ({width, height }) => {
 
     return () => clearInterval(bounceInterval); // Clean up interval on unmount
   }, [bounceApi]);
+
+  const combinedAnimation = {
+    ...scalingAnimation,
+    ...bounceAnimation,
+  };
   
 
   return (
     <animated.div
-      style={{ ...scalingAnimation, ...bounceAnimation }}
+      style={ isAnimated ? combinedAnimation : {} }
       className="flex align-middle justify-end"
     >
       <Image

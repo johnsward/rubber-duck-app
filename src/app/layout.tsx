@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Roboto } from "next/font/google";
+import { LoadingProvider } from "./context/LoadingContext";
 
 export const metadata: Metadata = {
   title: "Rubber Ducking",
@@ -9,16 +10,7 @@ export const metadata: Metadata = {
 
 const background = {
   background: "linear-gradient(36deg, rgba(245,230,236,1) 56%, rgba(255,217,136,1) 100%)",
-  margin: 0,
-  padding: 16,
   fontFamily: "Roboto, sans-serif",
-  height: "100vh",
-  display: "flex",
-  flexDirection: "column" as "column",
-  alignItems: "center",
-  justifyContent: "flex-start",
-  width: "100%",
-  overflow: "hidden",
 };
 
 
@@ -33,10 +25,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
+    <LoadingProvider>
     <html lang="en">
       <body className={roboto.className} style={background}>
         {children}
       </body>
     </html>
+    </LoadingProvider>
   );
 }
