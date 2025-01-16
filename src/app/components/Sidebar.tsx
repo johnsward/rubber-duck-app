@@ -24,6 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onRegister,
   selectedConversationId,
 }) => {
+  
   return (
     <div
       style={

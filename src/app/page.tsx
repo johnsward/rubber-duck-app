@@ -13,19 +13,20 @@ import AuthenticatedConversation from "./components/conversation/AuthenticatedCo
 import UnauthenticatedConversation from "./components/conversation/UnauthenticatedConversation";
 
 export default function Home() {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const { isLoading, setLoading } = useLoading();
   const [open, setOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
   const router = useRouter();
-  const searchParams = useSearchParams(); // For detecting the current conversation
-  const conversationId = searchParams.get("id"); // Extract 'id' from the URL
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get("id");
 
   const toggleSidebar = () => setIsCollapsed((prev) => !prev);
 
   useEffect(() => {
     const checkSession = async () => {
+      setLoading(true);
       try {
         const { data } = await supabase.auth.getSession();
         setIsLoggedIn(!!data.session);
@@ -34,7 +35,7 @@ export default function Home() {
         setOpen(true);
         console.error(error.message);
       } finally {
-        setLoading(false);
+        setLoading(false); // Ensure loading is stopped in all cases
       }
     };
 
@@ -42,20 +43,19 @@ export default function Home() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       const isUserLoggedIn = !!session;
-      setIsLoggedIn(isUserLoggedIn); 
+      setIsLoggedIn(isUserLoggedIn);
 
       if (isUserLoggedIn) {
         localStorage.removeItem("conversationEntries");
       }
     });
+
     checkSession();
 
     return () => {
       subscription?.unsubscribe();
     };
   }, []);
-
-
 
   const handleClose = (
     event: React.SyntheticEvent | Event,
@@ -71,7 +71,7 @@ export default function Home() {
   if (isLoading) {
     return (
       <div style={styles.pageContainer}>
-        <CircularProgress/>
+        <CircularProgress />
       </div>
     );
   }
@@ -83,7 +83,6 @@ export default function Home() {
   const handleRegisterRedirect = () => {
     router.push("/auth/register");
   };
-  
 
   return (
     <div className="flex flex-col h-screen">
@@ -106,6 +105,7 @@ export default function Home() {
             <UnauthenticatedConversation />
           )}
         </div>
+
         {errorMessage && (
           <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
             <Alert

@@ -5,9 +5,8 @@ import { UserMessage } from "./UserMessage";
 import Response from "./Response";
 import CodeInput from "./CodeInput";
 import { styles } from "../../styles/styles";
-import { analyzeCode } from "../CodeAnalyzer";
-import { Introduction } from "../Introduction";
 import { openAiInstructions } from "@/utils/openAiHelpers";
+import { Introduction } from "../Introduction";
 
 interface ConversationEntry {
   userMessage: string;
@@ -47,51 +46,65 @@ const UnauthenticatedConversation: React.FC = () => {
   }, [conversationEntries, isInitialized]);
 
   const addUserMessage = async (message: string) => {
-    try {
-      setIsLoading(true);
+    if (!message.trim()) {
+      console.error("Message is empty. Cannot process.");
+      return;
+    }
 
-      const newEntry: ConversationEntry = {
-        userMessage: message,
-        aiResponse: null,
+    setIsLoading(true);
+
+    const newEntry: ConversationEntry = {
+      userMessage: message,
+      aiResponse: null,
+    };
+
+    // Add the user's message to the state and localStorage immediately
+    setConversationEntries((prev) => [...prev, newEntry]);
+
+    try {
+      const messagesForApi = [
+        {
+          role: "system",
+          content: openAiInstructions.content,
+        },
+        ...conversationEntries.map((entry) =>
+          entry.userMessage
+            ? { role: "user", content: entry.userMessage }
+            : { role: "assistant", content: entry.aiResponse || "" }
+        ),
+        { role: "user", content: message },
+      ];
+
+      const eventSource = new EventSource(
+        `/api/analyzeCode?messages=${encodeURIComponent(
+          JSON.stringify(messagesForApi)
+        )}`
+      );
+
+      eventSource.onmessage = (event) => {
+        if (event.data === "[DONE]") {
+          eventSource.close();
+          setIsLoading(false);
+          return;
+        }
+
+        // Append AI response to the last entry
+        setConversationEntries((prev) =>
+          prev.map((entry, index) =>
+            index === prev.length - 1
+              ? { ...entry, aiResponse: (entry.aiResponse || "") + event.data }
+              : entry
+          )
+        );
       };
 
-      // Add the user's message to the state and localStorage immediately
-      setConversationEntries((prev) => [...prev, newEntry]);
-
-      try {
-        const messagesForApi = [
-          {
-            role: "system",
-            content: openAiInstructions.content,
-          },
-          ...conversationEntries.map((entry) =>
-            entry.userMessage
-              ? { role: "user", content: entry.userMessage }
-              : { role: "assistant", content: entry.aiResponse || "" }
-          ),
-          { role: "user", content: message },
-        ];
-    
-        // Get AI response
-        const aiResponse = await analyzeCode(messagesForApi);
-
-        // Update the last entry with the AI response
-        setConversationEntries((prev) => {
-          const updatedEntries = prev.map((entry, index) =>
-            index === prev.length - 1 ? { ...entry, aiResponse } : entry
-          );
-          return updatedEntries;
-        });
-      } catch (error: any) {
-        console.error(
-          "Failed to save AI response to localStorage:",
-          error.message
-        );
-      }
+      eventSource.onerror = (error) => {
+        console.error("SSE Error:", error);
+        eventSource.close();
+        setIsLoading(false);
+      };
     } catch (error: any) {
       console.error("Error in local addUserMessage:", error.message);
-    } finally {
-      setIsLoading(false);
     }
   };
 

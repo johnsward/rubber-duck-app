@@ -247,3 +247,4 @@ export const createNewChat = async (
 
   return conversationId;
 };
+

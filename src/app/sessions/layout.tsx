@@ -6,15 +6,13 @@ import { Header } from "@/app/components/Header";
 import { useParams } from "next/navigation";
 
 const ConversationLayout = ({ children }: { children: React.ReactNode }) => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const { id } = useParams();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id && typeof id === "string") {
       setSelectedConversationId(id);
-    } else {
-      setSelectedConversationId(null); // Fallback if ID is undefined or an array
     }
   }, [id]);
 
