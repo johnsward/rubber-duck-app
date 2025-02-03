@@ -5,7 +5,7 @@ interface AudioManagerProps {
   stream: MediaStream;
 }
 
-export const AudioManager: React.FC<AudioManagerProps> = ({ stream }) => {
+export const AudioManager: React.FC<AudioManagerProps> = () => {
   const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
 
   useEffect(() => {

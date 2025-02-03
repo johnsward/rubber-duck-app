@@ -1,6 +1,9 @@
-import { useState, useEffect, useRef, useMemo } from "react";
-import { initializeSSE, closeSSE } from "@/app/services/sseService";
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { initializeSSE } from "@/app/services/sseService";
 import { getFileLanguage, openAiInstructions } from "@/utils/openAiHelpers";
+import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
 
 interface ConversationEntry {
   userMessage: string;
@@ -8,27 +11,41 @@ interface ConversationEntry {
   loading: boolean;
 }
 
-export const useLocalConversation = () => {
-  const initialConversationEntries = useMemo(() => {
-    return JSON.parse(localStorage.getItem("conversationEntries") || "[]");
-  }, []);
+interface SSEMessage {
+  content: string;
+}
 
+export const useLocalConversation = () => {
   const [conversationEntries, setConversationEntries] = useState<
     ConversationEntry[]
-  >(initialConversationEntries);
+  >([]);
+
   const activeSSERef = useRef<boolean>(false);
 
-  // ✅ Load messages from local storage on mount
   useEffect(() => {
-    const storedEntries = localStorage.getItem("conversationEntries");
+    // ✅ Ensure this runs only on the client
+    const storedEntries =
+      typeof window !== "undefined"
+        ? localStorage.getItem("conversationEntries")
+        : null;
     if (storedEntries) {
       setConversationEntries(JSON.parse(storedEntries));
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        "conversationEntries",
+        JSON.stringify(conversationEntries)
+      );
+    }
+  }, [conversationEntries]);
 
   // Handles SSE connection for the latest message
-  const initializeSSEForUnansweredMessage = (messagesForApi: any[]) => {
+  const initializeSSEForUnansweredMessage = (
+    messagesForApi: ChatCompletionMessageParam[]
+  ) => {
     if (activeSSERef.current) {
       return;
     }
@@ -36,7 +53,7 @@ export const useLocalConversation = () => {
 
     let accumulatedResponse = "";
 
-    const handleMessage = (message: any) => {
+    const handleMessage = (message: SSEMessage) => {
       if (message.content) {
         accumulatedResponse += message.content;
 
@@ -79,52 +96,73 @@ export const useLocalConversation = () => {
       activeSSERef.current = false;
     };
 
+    const messagesForOpenAI: ChatCompletionMessageParam[] = [
+      { role: "system", content: openAiInstructions.content },
+      ...messagesForApi,
+    ];
+
     initializeSSE(
-      [
-        { role: "system", content: openAiInstructions.content },
-        ...messagesForApi,
-      ],
+      messagesForOpenAI,
       handleMessage,
       handleError,
       handleComplete
     );
   };
-  
-  const processMessage = async (message: string, files: { file: File; content: string }[]) => {
+
+  const processMessage = async (
+    message: string,
+    files: { file: File; content: string }[]
+  ) => {
     if (!message.trim() && files.length === 0) return;
-  
+
     // ✅ Format files into readable code blocks
     const formattedFiles = files
-      .map(({ file, content }) => `📂 **${file.name}**\n\`\`\`${getFileLanguage(file.name)}\n${content}\n\`\`\``)
+      .map(
+        ({ file, content }) =>
+          `📂 **${file.name}**\n\`\`\`${getFileLanguage(
+            file.name
+          )}\n${content}\n\`\`\``
+      )
       .join("\n\n");
-  
+
     // ✅ Merge user message + files into a single structured entry
-    const finalMessage = message.trim() && formattedFiles
-      ? `${message.trim()}\n\n---\n${formattedFiles}`
-      : message.trim() || formattedFiles; // Use whichever exists
-  
+    const finalMessage =
+      message.trim() && formattedFiles
+        ? `${message.trim()}\n\n---\n${formattedFiles}`
+        : message.trim() || formattedFiles; // Use whichever exists
+
     const newEntry: ConversationEntry = {
       userMessage: finalMessage,
       aiResponse: "",
       loading: true,
     };
-  
+
     // ✅ Update localStorage + State
     setConversationEntries((prev) => {
       const updatedEntries = [...prev, newEntry];
-      localStorage.setItem("conversationEntries", JSON.stringify(updatedEntries));
+      localStorage.setItem(
+        "conversationEntries",
+        JSON.stringify(updatedEntries)
+      );
       return updatedEntries;
     });
-  
+
     // ✅ Fetch the full conversation from localStorage
-    const storedEntries = JSON.parse(localStorage.getItem("conversationEntries") || "[]");
-  
-    // ✅ Convert conversation history into OpenAI API format
-    const messagesForApi = storedEntries.map((entry: ConversationEntry) => ({
-      role: "user",
-      content: entry.userMessage,
-    }));
-  
+    let storedEntries: ConversationEntry[] = [];
+
+    if (typeof window !== "undefined") {
+      storedEntries = JSON.parse(
+        localStorage.getItem("conversationEntries") || "[]"
+      );
+    }
+
+    const messagesForApi: ChatCompletionMessageParam[] = storedEntries.map(
+      (entry: ConversationEntry) => ({
+        role: "user",
+        content: entry.userMessage,
+      })
+    ) as ChatCompletionMessageParam[];
+
     initializeSSEForUnansweredMessage(messagesForApi);
   };
 

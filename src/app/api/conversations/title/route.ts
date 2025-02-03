@@ -57,11 +57,13 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json({ conversations }, { status: 200 });
-  } catch (error: any) {
-    console.error("Unexpected error:", error.message);
-    NextResponse.json(
-      { error: "An unexpected error occurred while fetching conversations." },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Unexpected error:", error.message);
+      return NextResponse.json(
+        { error: "An unexpected error occurred while fetching conversations." },
+        { status: 500 }
+      );
+    }
   }
-};
+}

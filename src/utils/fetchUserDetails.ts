@@ -24,10 +24,12 @@ export const fetchUserDetails = async () => {
     }
 
     return data;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (error instanceof Error) {
     console.error(error.message);
     return null;
   }
+};
 };
 
 export const fetchUserInitials = async (): Promise<string | null> => {
@@ -41,8 +43,13 @@ export const fetchUserInitials = async (): Promise<string | null> => {
     }
 
     return null;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (error instanceof Error) {
     console.error("Error fetching intials", error.message);
     return null;
+  } else {
+    console.error("An unexpected error occurred.");
+    return null;
   }
+}
 };

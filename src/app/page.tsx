@@ -1,12 +1,11 @@
 "use client";
-import { LoadingProvider, useLoading } from "@/app/context/LoadingContext";
-import React, { useEffect, useState } from "react";
+import { useLoading } from "@/app/context/LoadingContext";
+import React, { useEffect, useState, Suspense } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { styles } from "./styles/styles";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
-import LinearProgress from "@mui/material/LinearProgress";
 import { CircularProgress, Snackbar, SnackbarCloseReason } from "@mui/material";
 import Alert from "@mui/material/Alert";
 import AuthenticatedConversation from "./components/conversation/AuthenticatedConversation";
@@ -18,9 +17,17 @@ export default function Home() {
   const { isLoading, setLoading } = useLoading();
   const [open, setOpen] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const conversationId = searchParams.get("id");
+
+  const SearchParamsWrapper = ({ setConversationId }: { setConversationId: (id: string | null) => void }) => {
+    const searchParams = useSearchParams();
+    const conversationId = searchParams.get("id");
+  
+    setConversationId(conversationId); // Update parent state
+  
+    return null; // This component does not render anything
+  };
 
   const toggleSidebar = () => setIsCollapsed((prev) => !prev);
 
@@ -30,10 +37,12 @@ export default function Home() {
       try {
         const { data } = await supabase.auth.getSession();
         setIsLoggedIn(!!data.session);
-      } catch (error: any) {
-        setErrorMessage("Failed to authenticate.");
-        setOpen(true);
-        console.error(error.message);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          setErrorMessage("Failed to authenticate.");
+          setOpen(true);
+          console.error(error.message);
+        }
       } finally {
         setLoading(false); // Ensure loading is stopped in all cases
       }
@@ -89,14 +98,18 @@ export default function Home() {
       <Header isSidebarCollapsed={isCollapsed} isLoggedIn={isLoggedIn} />
 
       <div className="flex flex-row flex-grow">
-        <Sidebar
-          isCollapsed={isCollapsed}
-          onLogin={handleLoginRedirect}
-          onRegister={handleRegisterRedirect}
-          isLoggedIn={isLoggedIn}
-          toggleSidebar={toggleSidebar}
-          selectedConversationId={conversationId}
-        />
+        <Suspense fallback={<CircularProgress />}>
+          <SearchParamsWrapper setConversationId={setConversationId} /> {/* ✅ Get params safely */}
+        </Suspense>
+          <Sidebar
+            isCollapsed={isCollapsed}
+            onLogin={handleLoginRedirect}
+            onRegister={handleRegisterRedirect}
+            isLoggedIn={isLoggedIn}
+            toggleSidebar={toggleSidebar}
+            selectedConversationId={conversationId} // ✅ Wrapped inside Suspense
+          />
+
 
         <div className="w-full h-full">
           {isLoggedIn ? (

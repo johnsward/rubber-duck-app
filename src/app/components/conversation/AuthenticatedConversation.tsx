@@ -1,14 +1,10 @@
 "use client";
 import { useLoading } from "@/app/context/LoadingContext";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState, useRef, use } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { getMessagesByConversation } from "@/app/api/dbQueries";
 import {
-  createConversation,
   createNewChat,
-  getConversationById,
-  updateConversationTitle,
 } from "@/utils/conversationHelpers";
 import { UserMessage } from "./UserMessage";
 import Response from "./Response";
@@ -17,7 +13,6 @@ import { styles } from "../../styles/styles";
 import { CircularProgress } from "@mui/material";
 import { Introduction } from "../Introduction";
 import { useConversation } from "@/app/hooks/conversationHooks";
-import { closeSSE } from "@/app/services/sseService";
 
 interface AuthenticatedConversationProps {
   conversationId?: string;
@@ -33,7 +28,7 @@ const AuthenticatedConversation: React.FC<AuthenticatedConversationProps> = ({
 
   const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const { isLoading, setLoading } = useLoading();
+  const { isLoading } = useLoading();
   const [pendingMessage, setPendingMessage] = useState<string | null>();
   const router = useRouter();
 
@@ -80,7 +75,7 @@ const AuthenticatedConversation: React.FC<AuthenticatedConversationProps> = ({
       // ✅ Clear localStorage immediately to prevent duplicates
       localStorage.removeItem("pendingMessage");
     }
-  }, [conversationId]);
+  }, [conversationId, processMessage]);
 
   const addUserMessage = async (message: string) => {
     if (!message.trim()) {

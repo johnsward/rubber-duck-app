@@ -15,8 +15,10 @@ export async function GET(request: Request) {
   try {
     const conversations = await getConversationsByUser(userId);
     return NextResponse.json(conversations, { status: 200 });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
   }
 }
 
@@ -44,8 +46,10 @@ export async function POST(request: Request) {
       throw Error;
     }
     return NextResponse.json({ conversations: data[0] }, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating conversation:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
   }
 }

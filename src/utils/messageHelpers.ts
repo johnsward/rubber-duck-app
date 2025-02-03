@@ -30,8 +30,16 @@ export const saveMessageToDatabase = async (
     }
 
     return { success: true, data };
-  } catch (error: any) {
-    console.error("Unexpected error saving message to the database:", error.message);
-    return { success: false, error: error.message };
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error(
+        "Unexpected error saving message to the database:",
+        error.message
+      );
+      return { success: false, error: error.message };
+    } else {
+      console.error("An unexpected error occurred.");
+      return { success: false, error: "An unexpected error occurred." };
+    }
   }
 };

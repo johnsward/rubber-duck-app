@@ -32,9 +32,11 @@ export async function addMessage(
       throw new Error(error.message);
     }
     return data;
-  } catch (error: any) {
-    console.error("Error adding message:", error.message);
-    throw new Error(error.message);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error adding message:", error.message);
+      throw new Error(error.message);
+    }
   }
 }
 

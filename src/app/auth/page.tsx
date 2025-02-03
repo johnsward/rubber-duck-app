@@ -24,7 +24,7 @@ const Login = () => {
     if (!email || !password) {
       setErrorMessage("Please fill in all fields.");
       setOpen(true);
-      return; 
+      return;
     }
     try {
       setLoading(true);
@@ -39,10 +39,12 @@ const Login = () => {
       } else {
         router.push("/");
       }
-    } catch (error: any) {
-      console.error(error.message);
-      setErrorMessage("An unexpected error occurred.");
-      setOpen(true);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(error.message);
+        setErrorMessage("An unexpected error occurred.");
+        setOpen(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -78,11 +80,15 @@ const Login = () => {
             />
           </div>
           <Button type="submit" onClick={handleAuth}>
-          {loading ? <CircularProgress size={20} color="inherit" /> : "Log in"}
+            {loading ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              "Log in"
+            )}
           </Button>
         </div>
         <div className="flex flex-row w-full items-center justify-between p-4">
-          <h4 style={styles.lightText}>Don't have an account?</h4>
+          <h4 style={styles.lightText}>{"Don't have an account?"}</h4>
           <Link href={"/auth/register"}>
             <h4 style={styles.registerLink}>Register</h4>
           </Link>

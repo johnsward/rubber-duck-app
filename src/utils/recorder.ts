@@ -1,7 +1,4 @@
-import React from "react";
-
 export class AudioDevices extends EventTarget {
-  private busy = false;
   private _denied = false;
   private _devices: MediaDeviceInfo[] = [];
 
@@ -41,7 +38,7 @@ export class AudioDevices extends EventTarget {
     try {
       stream = await navigator.mediaDevices.getUserMedia(constraints);
       this.denied = false;
-    } catch (ex) {
+    } catch {
       this.denied = true;
     }
     this.updateDeviceList();
@@ -82,16 +79,14 @@ export class AudioDevices extends EventTarget {
   
 }
 
-const audioDevices = new AudioDevices();
-
 async function getPermissions() {
   if (navigator?.permissions) {
     return (
       navigator.permissions
-        // @ts-ignore - ignore because microphone is not in the enum of name for all browsers
+        // @ts-expect-error - ignore because microphone is not in the enum of name for all browsers
         ?.query({ name: "microphone" })
         .then((result) => result.state)
-        .catch((err) => {
+        .catch(() => {
           return "prompt";
         })
     );

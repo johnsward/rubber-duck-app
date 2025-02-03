@@ -1,8 +1,13 @@
 let eventSource: EventSource | null = null;
+import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
+
+interface SSEMessage {
+  content: string;
+}
 
 export const initializeSSE = (
-  identifier: string | any[],
-  onMessage: (message: any) => void,
+  identifier: string | ChatCompletionMessageParam[],
+  onMessage: (message: SSEMessage) => void,
   onError: () => void,
   onComplete: () => void
 ): (() => void) => {
@@ -42,8 +47,10 @@ export const initializeSSE = (
       try {
         const parsedData = JSON.parse(event.data);
         onMessage(parsedData);
-      } catch (error: any) {
-        console.error("Error parsing SSE message:", error.message);
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Error parsing SSE message:", error.message);
+        }
       }
     };
 
@@ -64,40 +71,38 @@ export const initializeSSE = (
         if (!reader) return;
 
         const decoder = new TextDecoder();
-        let accumulatedResponse = "";
 
         const readStream = async () => {
           let partialChunk = ""; // Buffer for incomplete JSON chunks
-        
+
           while (true) {
             const { value, done } = await reader.read();
             if (done) break; // Stop reading when finished
-        
+
             const chunk = decoder.decode(value, { stream: true });
-        
+
             // ✅ Ensure last message is processed before completing
             if (chunk.includes("[DONE]")) {
               console.log("✅ SSE Complete. Final response stored.");
               return onComplete();
             }
-        
-            partialChunk += chunk; 
-            const messages = partialChunk.trim().split("\n\n"); 
-        
+
+            partialChunk += chunk;
+            const messages = partialChunk.trim().split("\n\n");
+
             messages.forEach((msg) => {
               try {
                 if (!msg.startsWith("data:")) return; // Skip invalid messages
-        
+
                 const jsonContent = msg.replace(/^data:\s*/, ""); // ✅ Safe removal of "data: "
                 const parsedData = JSON.parse(jsonContent);
-        
-                accumulatedResponse += parsedData.content;
+
                 onMessage(parsedData);
-        
+
                 // ✅ Reset buffer only after successful JSON parse
-                partialChunk = ""; 
+                partialChunk = "";
               } catch (error) {
-                console.warn("⚠️ Waiting for full JSON chunk...");
+                console.warn("⚠️ Waiting for full JSON chunk...", error);
               }
             });
           }

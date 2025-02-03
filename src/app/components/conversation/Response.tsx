@@ -7,7 +7,7 @@ import IconButton from "@mui/joy/IconButton";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import ContentPasteIcon from "@mui/icons-material/ContentPaste";
 import Snackbar, { SnackbarCloseReason } from "@mui/material/Snackbar";
-import { Alert, CircularProgress, LinearProgress } from "@mui/material";
+import { Alert} from "@mui/material";
 import RubberDuck from "../RubberDuck";
 
 interface ResponseProps {

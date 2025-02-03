@@ -3,11 +3,11 @@ import React from "react";
 // styles.ts
 export const styles = {
   pageContainer: {
-    position: "relative" as "relative",
+    position: "relative",
     margin: 0,
     height: "100vh",
     display: "flex",
-    flexDirection: "row" as "row",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "flex-start",
     width: "100%",
@@ -80,7 +80,7 @@ export const styles = {
   } as React.CSSProperties,
 
   rubberDuckContainer: {
-    position: "absolute" as "absolute",
+    position: "absolute",
     top: 0,
     left: 0,
   } as React.CSSProperties,

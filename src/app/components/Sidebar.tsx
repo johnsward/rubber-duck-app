@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { styles } from "../styles/styles";
 import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
 import { IconButton } from "@mui/material";
@@ -50,7 +50,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex flex-col gap-4">
               <h1 style={styles.lightText}>Psst...</h1>
               <h1 style={styles.darkText}>
-                You're gonna have to log in to see your sessions!
+                {"You're gonna have to log in to see your sessions!"}
               </h1>
             </div>
             <div className="flex flex-col gap-2 w-full h-full align-middle justify-center">

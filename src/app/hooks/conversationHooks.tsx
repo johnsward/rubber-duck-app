@@ -13,6 +13,10 @@ interface ConversationEntry {
   loading: boolean;
 }
 
+interface SSEMessage {
+  content?: string;
+}
+
 export const useConversation = (
   conversationId: string | null,
   pendingMessage: string | null,
@@ -30,7 +34,7 @@ export const useConversation = (
     const fetchMessages = async () => {
       try {
         const messages = await getMessagesByConversation(conversationId);
-        let fetchedEntries = messages.map((message) => ({
+        const fetchedEntries = messages.map((message) => ({
           userMessage: message.sender === "user" ? message.message_text : null,
           aiResponse: message.sender === "ai" ? message.message_text : null,
           loading: false,
@@ -114,7 +118,7 @@ export const useConversation = (
 
     let accumulatedResponse = "";
 
-    const handleMessage = (message: any) => {
+    const handleMessage = (message: SSEMessage) => {
       if (message.content) {
         accumulatedResponse += message.content;
 

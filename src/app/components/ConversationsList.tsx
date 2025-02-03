@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   IconButton,
   MenuItem,
@@ -57,11 +57,13 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
           const conversationList = await getConversationsByUser(userId);
           setConversations(conversationList);
         }
-      } catch (error: any) {
-        console.error("Error fetching conversations:", error.message);
-        setOpen(true);
-        setSnackbarMessage("Failed to fetch conversations.");
-        setSnackbarSeverity("error");
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.error("Error fetching conversations:", error.message);
+          setOpen(true);
+          setSnackbarMessage("Failed to fetch conversations.");
+          setSnackbarSeverity("error");
+        }
       } finally {
         setLoading(false);
       }
@@ -164,10 +166,12 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
       setOpen(true);
       setSnackbarMessage("Conversation successfully deleted!");
       setSnackbarSeverity("success");
-    } catch (error: any) {
+    } catch (error: unknown) {
+      if (error instanceof Error) {
       console.error("Unexpected error during deletion:", error.message);
       setSnackbarMessage("Unexpected error occurred. Please try again.");
       setSnackbarSeverity("error");
+      }
     }
   };
 

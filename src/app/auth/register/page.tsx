@@ -61,10 +61,12 @@ const Register = () => {
         // Redirect after a short delay
         setTimeout(() => router.push("/auth"), 5000);
       }
-    } catch (error: any) {
-      console.error(error.message);
-      setErrorMessage("An unexpected error occurred.");
-      setOpenError(true);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(error.message);
+        setErrorMessage("An unexpected error occurred.");
+        setOpenError(true);
+      }
     } finally {
       setLoading(false);
     }
