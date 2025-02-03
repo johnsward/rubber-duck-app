@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import openai from "@/lib/openAiClient";
 import { ChatCompletionMessageParam } from "openai/resources/index.mjs";
-import { openAiInstructions } from "@/utils/openAiHelpers";
+import {
+  formatFilesForOpenAi,
+  openAiInstructions,
+} from "@/utils/openAiHelpers";
 import { getMessagesByConversation } from "../dbQueries";
 
 export async function POST(request: Request) {
-  const { messages } = await request.json();
+  const { messages, files } = await request.json();
 
-  if (!messages || !Array.isArray(messages)) {
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
+    console.error("❌ Error: No messages received");
     return NextResponse.json(
       { error: "Messages are required" },
       { status: 400 }
@@ -20,19 +24,29 @@ export async function POST(request: Request) {
 
   const easterEggTrigger = "How can Björn Svensson help John?";
   const easterEggResponse =
-    "I hear a letter of recommendation would be greatly appreciated! John is supposedly applying for a masters, and a letter from Björn would go a long way!";
+    "I hear a letter of recommendation would be greatly appreciated! John is supposedly applying for a master's, and a letter from Björn would go a long way!";
 
-  if (latestUserMessage && latestUserMessage.trim() === easterEggTrigger) {
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      start(controller) {
-        controller.enqueue(encoder.encode(`data: ${easterEggResponse}\n\n`));
+  const encoder = new TextEncoder();
+
+  // ✅ Easter Egg Trigger Detected - Stream It Like OpenAI Response
+  if (latestUserMessage?.trim() === easterEggTrigger) {
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        for (const char of easterEggResponse) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ content: char })}\n\n`)
+          );
+          await new Promise((resolve) => setTimeout(resolve, 5)); // Simulate streaming delay
+        }
+
+        // ✅ Ensure all data is fully sent before closing
+        await new Promise((resolve) => setTimeout(resolve, 100));
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();
       },
     });
 
-    return new Response(stream, {
+    return new Response(readableStream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
@@ -41,40 +55,46 @@ export async function POST(request: Request) {
     });
   }
 
-  try {
-    const encoder = new TextEncoder();
+  const formattedFiles = formatFilesForOpenAi(files || []);
 
+  const systemInstructions = `${openAiInstructions.content}\n\n---\n### 📂 Uploaded Files:\n${formattedFiles}`;
+
+  const allMessages = [
+    { role: "system", content: systemInstructions },
+    ...messages,
+  ];
+
+  // If No Easter Egg, Process Normally with OpenAI
+  try {
     const readableStream = new ReadableStream({
       async start(controller) {
         try {
-          const allMessages = [
-            { role: "system", content: openAiInstructions.content },
-            ...messages,
-          ];
-
           const completion = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: allMessages,
             stream: true,
           });
 
+          let lastChunkReceived = false;
+
           for await (const chunk of completion) {
             const content = chunk.choices[0]?.delta?.content || "";
             if (content) {
-              // Serialize the content as a JSON object
-              const serializedContent = JSON.stringify({ content });
               controller.enqueue(
-                encoder.encode(`data: ${serializedContent}\n\n`)
+                encoder.encode(`data: ${JSON.stringify({ content })}\n\n`)
               );
             }
+            lastChunkReceived = true;
           }
 
-          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
-          controller.close();
+          // ✅ Ensure last chunk is processed before closing
+          if (lastChunkReceived) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+            controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+            controller.close();
+          }
         } catch (error) {
-          console.error("Error in OpenAI stream:", error);
-          const errorMessage = JSON.stringify({ error: "Streaming failed." });
-          controller.enqueue(encoder.encode(`data: ${errorMessage}\n\n`));
+          console.error("❌ Error in OpenAI stream:", error);
           controller.close();
         }
       },
@@ -88,9 +108,9 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Error processing OpenAI request:", error);
+    console.error("❌ Error processing request:", error);
     return NextResponse.json(
-      { error: "There was an error processing your request." },
+      { error: "Error processing request" },
       { status: 500 }
     );
   }
@@ -133,7 +153,11 @@ export async function GET(request: Request) {
           typeof latestUserMessage === "string" &&
           latestUserMessage.trim() === easterEggTrigger
         ) {
-          controller.enqueue(encoder.encode(`data: ${easterEggResponse}\n\n`));
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({ content: easterEggResponse })}\n\n`
+            )
+          );
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
           return;
@@ -168,7 +192,6 @@ export async function GET(request: Request) {
             );
           }
         }
-
         // Signal completion
         controller.enqueue(encoder.encode("data: [DONE]\n\n"));
         controller.close();

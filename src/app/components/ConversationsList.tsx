@@ -22,6 +22,7 @@ import { deleteConversation } from "@/utils/conversationHelpers";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Button } from "./ui/button";
 import { supabase } from "@/lib/supabaseClient";
+import { closeSSE } from "../services/sseService";
 
 interface Conversation {
   conversation_id: string;
@@ -214,7 +215,13 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
 
   return (
     <div className="flex flex-col p-4 max-h-[600px] overflow-y-auto scroll-smooth gap-4">
-      <Button onClick={() => router.push("/")} variant="secondary">
+      <Button
+        onClick={() => {
+          router.push("/");
+          closeSSE();
+        }}
+        variant="secondary"
+      >
         Back to home
       </Button>
       <ul style={{ listStyle: "none", padding: 0, color: "#ccc" }}>
