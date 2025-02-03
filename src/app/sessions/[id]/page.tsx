@@ -16,7 +16,7 @@ const ConversationPage: React.FC = () => {
 
   if (!conversationId) {
     return (
-      <div className="flex flex-col items-center height-full justify-center">
+      <div className="flex w-full h-screen items-center justify-center">
         <CircularProgress />
       </div>
     );

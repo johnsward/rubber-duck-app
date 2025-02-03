@@ -33,10 +33,13 @@ interface ConversationsListProps {
   selectedConversationId: string | null;
 }
 
-export const ConversationsList: React.FC<ConversationsListProps> = ({selectedConversationId}) => {
+export const ConversationsList: React.FC<ConversationsListProps> = ({
+  selectedConversationId,
+}) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [itemToBeDeleted, setItemToBeDeleted] = useState<string | null>(null);
   const [open, setOpen] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
@@ -55,6 +58,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
         }
       } catch (error: any) {
         console.error("Error fetching conversations:", error.message);
+        setOpen(true);
         setSnackbarMessage("Failed to fetch conversations.");
         setSnackbarSeverity("error");
       } finally {
@@ -109,14 +113,13 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
       supabase.removeChannel(subscription);
     };
   }, []);
-  
-  
+
   const handleMenuOpen = (
     event: React.MouseEvent<HTMLElement>,
     conversationId: string
   ) => {
     setAnchorEl(event.currentTarget);
-    selectedConversationId = conversationId;
+    setItemToBeDeleted(conversationId);
   };
 
   const handleMenuClose = () => {
@@ -124,7 +127,8 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
   };
 
   const handleDelete = async () => {
-    if (!selectedConversationId) {
+    if (!itemToBeDeleted) {
+      setOpen(true);
       setSnackbarMessage("No conversation selected for deletion.");
       setSnackbarSeverity("error");
       return;
@@ -132,9 +136,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
 
     try {
       setIsDialogOpen(false);
-      const { success, error } = await deleteConversation(
-        selectedConversationId!
-      );
+      const { success, error } = await deleteConversation(itemToBeDeleted!);
 
       if (!success) {
         console.error("Failed to delete conversation:", error);
@@ -145,17 +147,20 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
 
       // Refresh the conversation list
       const updatedList = conversations.filter(
-        (conv) => conv.conversation_id !== selectedConversationId
+        (conv) => conv.conversation_id !== itemToBeDeleted
       );
       setConversations(updatedList);
+
+      setItemToBeDeleted(null);
 
       // Redirect to another conversation or fallback
       if (updatedList.length > 0) {
         router.push(`/sessions/${updatedList[0].conversation_id}`);
       } else {
+        setItemToBeDeleted(null); // Clear `itemToBeDeleted`
         router.push("/");
       }
-
+      setOpen(true);
       setSnackbarMessage("Conversation successfully deleted!");
       setSnackbarSeverity("success");
     } catch (error: any) {
@@ -168,9 +173,14 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
   const handleDialogClose = (confirm: boolean) => {
     setIsDialogOpen(false);
     handleMenuClose();
-    if (confirm && selectedConversationId) {
+    if (confirm && itemToBeDeleted) {
       handleDelete();
     }
+  };
+
+  const handleDialogOpen = () => {
+    setAnchorEl(null);
+    setIsDialogOpen(true);
   };
 
   const handleClose = (
@@ -203,7 +213,10 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
   }
 
   return (
-    <div className="flex flex-col p-4">
+    <div className="flex flex-col p-4 max-h-[600px] overflow-y-auto scroll-smooth gap-4">
+      <Button onClick={() => router.push("/")} variant="secondary">
+        Back to home
+      </Button>
       <ul style={{ listStyle: "none", padding: 0, color: "#ccc" }}>
         {conversations.map((conversation) => (
           <li
@@ -225,7 +238,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
               <IconButton
                 onClick={(event) => {
                   event.stopPropagation();
-                  handleMenuOpen(event, conversation.conversation_id);
+                  handleMenuOpen(event, conversation.conversation_id!);
                 }}
               >
                 <MoreVertIcon />
@@ -236,7 +249,12 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
                 onClose={handleMenuClose}
                 style={{ marginLeft: 4 }}
               >
-                <MenuItem onClick={() => setIsDialogOpen(true)}>
+                <MenuItem
+                  onClick={(event) => {
+                    event.stopPropagation(); // Prevent bubbling to the list item
+                    handleDialogOpen();
+                  }}
+                >
                   <ListItemIcon>
                     <DeleteIcon fontSize="small" />
                   </ListItemIcon>
@@ -270,9 +288,9 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({selectedCon
       <div>
         <Snackbar
           open={open}
-          autoHideDuration={6000}
+          autoHideDuration={4000}
           onClose={handleClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         >
           <Alert
             onClose={handleClose}

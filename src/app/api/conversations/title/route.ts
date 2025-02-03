@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "system",
-          content: `Generate a concise and descriptive title for the following code or conversation. The title must be less than 5 words`,
+          content: `Generate a concise and descriptive title for the following code or conversation. The title must be less than 20 characters`,
         },
         { role: "user", content: message },
       ],
