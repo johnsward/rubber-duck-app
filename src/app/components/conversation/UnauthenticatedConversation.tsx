@@ -9,8 +9,7 @@ import { Introduction } from "../Introduction";
 import { useLocalConversation } from "@/app/hooks/useLocalConversation";
 
 const UnauthenticatedConversation: React.FC = () => {
-  const { conversationEntries, isLoading, processMessage } =
-    useLocalConversation();
+  const { conversationEntries, processMessage } = useLocalConversation();
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
