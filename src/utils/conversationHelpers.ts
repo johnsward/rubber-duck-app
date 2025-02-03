@@ -131,7 +131,10 @@ export const createConversation = async (
 
     return data.conversation_id; // Successfully created conversation
   } catch (error: any) {
-    console.error("Unexpected error occurred while creating conversation:", error.message);
+    console.error(
+      "Unexpected error occurred while creating conversation:",
+      error.message
+    );
     return null;
   }
 };
@@ -204,7 +207,11 @@ export const getConversationById = async (
   conversationId: string
 ): Promise<{ success: boolean; data?: any; error?: string }> => {
   try {
-    const {data, error} = await supabase.from("conversations").select("*").eq("conversation_id", conversationId).single();
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .single();
 
     if (error) {
       console.error("Error fetching conversation by ID:", error.message);
@@ -241,10 +248,13 @@ export const createNewChat = async (
 
   // Handle initial message
   if (initialMessage) {
-    await updateConversationTitle(conversationId, initialMessage);
-    await saveMessageToDatabase(conversationId, "user", initialMessage);
+    try {
+      await updateConversationTitle(conversationId, initialMessage);
+    } catch (error: any) {
+      console.error("Failed to update conversation title:", error.message);
+      return null;
+    }
   }
 
   return conversationId;
 };
-

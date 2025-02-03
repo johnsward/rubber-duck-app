@@ -1,11 +1,12 @@
 "use client";
 import { useLoading } from "@/app/context/LoadingContext";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, use } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { getMessagesByConversation } from "@/app/api/dbQueries";
 import {
   createConversation,
+  createNewChat,
   getConversationById,
   updateConversationTitle,
 } from "@/utils/conversationHelpers";
@@ -16,6 +17,7 @@ import { styles } from "../../styles/styles";
 import { CircularProgress } from "@mui/material";
 import { Introduction } from "../Introduction";
 import { useConversation } from "@/app/hooks/conversationHooks";
+import { closeSSE } from "@/app/services/sseService";
 
 interface AuthenticatedConversationProps {
   conversationId?: string;
@@ -34,13 +36,12 @@ const AuthenticatedConversation: React.FC<AuthenticatedConversationProps> = ({
   const { isLoading, setLoading } = useLoading();
   const [pendingMessage, setPendingMessage] = useState<string | null>();
   const router = useRouter();
-  
+
   const { conversationEntries, processMessage } = useConversation(
     conversationId,
     pendingMessage!,
     setPendingMessage
   );
-
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -61,6 +62,25 @@ const AuthenticatedConversation: React.FC<AuthenticatedConversationProps> = ({
     fetchUserId();
   }, []);
 
+  useEffect(() => {
+    console.log(
+      "AuthenticatedConversation mounted with conversationId:",
+      conversationId
+    );
+
+    if (!conversationId) return;
+
+    const storedPendingMessage = localStorage.getItem("pendingMessage");
+    if (storedPendingMessage) {
+      console.log("Processing stored pending message:", storedPendingMessage);
+
+      // ✅ Process the pending message AFTER navigation
+      processMessage(conversationId, storedPendingMessage);
+
+      // ✅ Clear localStorage immediately to prevent duplicates
+      localStorage.removeItem("pendingMessage");
+    }
+  }, [conversationId]);
 
   const addUserMessage = async (message: string) => {
     if (!message.trim()) {
@@ -75,22 +95,22 @@ const AuthenticatedConversation: React.FC<AuthenticatedConversationProps> = ({
 
     try {
       if (!conversationId) {
-        const newConversationId = await createConversation(userId);
+        console.log("Creating new chat with message:", message);
+
+        localStorage.setItem("pendingMessage", message);
+        setPendingMessage(message);
+
+        const newConversationId = await createNewChat(message, (newId) => {
+          router.push(`/sessions/${newId}`);
+        });
+
         if (!newConversationId) {
           console.error("Failed to create a new conversation.");
           return;
         }
-        setPendingMessage(message); // Process message after redirect
-        router.push(`/sessions/${newConversationId}`);
-        setConversationId(newConversationId);
-        await updateConversationTitle(newConversationId, message);
-        return;
-      }
 
-      const conversation = await getConversationById(conversationId);
-      
-      if (conversation.data?.title == 'New Chat') {
-        await updateConversationTitle(conversationId, message);
+        setConversationId(newConversationId);
+        return;
       }
       processMessage(conversationId, message);
     } catch (error) {
@@ -99,7 +119,7 @@ const AuthenticatedConversation: React.FC<AuthenticatedConversationProps> = ({
   };
 
   if (
-    !conversationEntries || 
+    !conversationEntries ||
     (conversationEntries.length === 0 && !isLoading && !pendingMessage)
   ) {
     return (
