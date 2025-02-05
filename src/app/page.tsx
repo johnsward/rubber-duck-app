@@ -86,11 +86,11 @@ export default function Home() {
   }
 
   const handleLoginRedirect = () => {
-    return router.push("/auth");
+    router.push("/auth");
   };
 
   const handleRegisterRedirect = () => {
-    return router.push("/auth/register");
+    router.push("/auth/register");
   };
 
   return (

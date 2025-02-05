@@ -54,13 +54,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </h1>
             </div>
             <div className="flex flex-col gap-2 w-full h-full align-middle justify-center">
-              <Button variant="default" color="primary" onClick={() => onLogin}>
+              <Button variant="default" color="primary" onClick={onLogin}>
                 Log in
               </Button>
               <Button
                 variant="outline"
                 color="secondary"
-                onClick={() => onRegister}
+                onClick={onRegister}
               >
                 Register
               </Button>
