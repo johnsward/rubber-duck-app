@@ -168,9 +168,9 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
       setSnackbarSeverity("success");
     } catch (error: unknown) {
       if (error instanceof Error) {
-      console.error("Unexpected error during deletion:", error.message);
-      setSnackbarMessage("Unexpected error occurred. Please try again.");
-      setSnackbarSeverity("error");
+        console.error("Unexpected error during deletion:", error.message);
+        setSnackbarMessage("Unexpected error occurred. Please try again.");
+        setSnackbarSeverity("error");
       }
     }
   };
